@@ -160,4 +160,4 @@ Custom tools can do anything VBA can do — manipulate Office documents, query d
 
 ## License
 
-This project is made available for public use. See the repository for license details.
+[MIT](LICENSE)
