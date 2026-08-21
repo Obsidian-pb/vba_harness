@@ -1,0 +1,16 @@
+Attribute VB_Name = "m_Constants"
+' Module: m_Constants - Global constants (debug mode, registry keys, harness/toolbar names)
+Public Const DEBUG_MODE = False
+Public Const HARNESS_NAME = "HARNESS"
+
+
+Public Const CHAT_LLM_FORM_CAPTION = "Coder"
+Public Const TOLLBAR_NAME = "LLM"
+
+' Registry keys (HKCU)
+Public Const REG_ROOT As String = "HKEY_CURRENT_USER\Software\LLMRedactorMacro\"
+Public Const REG_LLM_API_URL As String = REG_ROOT & "LLM_API_URL"
+Public Const REG_LLM_MODEL_ID As String = REG_ROOT & "LLM_MODEL_ID"
+Public Const REG_LLM_MODEL_FAST_ID As String = REG_ROOT & "LLM_MODEL_FAST_ID"
+Public Const REG_LLM_API_KEY As String = REG_ROOT & "LLM_API_KEY"
+Public Const REG_LLM_SYSTEM_PROMPT As String = REG_ROOT & "LLM_SYSTEM_PROMPT"
