@@ -146,6 +146,77 @@ The **Chat** form (`LLM_chat_html`) provides an HTML-based interface for interac
 
 ---
 
+## Usage Scenarios
+
+Below are examples of how to prompt the harness for common tasks. Each scenario shows a user prompt and a brief description of which tools the agent uses.
+
+### Writing Code from Scratch
+
+**Prompt:**
+> Write a module `m_StringUtils` with functions `TrimAll(s As String) As String` (removes all spaces) and `CountWords(s As String) As Long` (counts words). Add comments to each function.
+
+**What happens:** the agent calls `add_module` to create a new standard module `m_StringUtils` with the specified code, then `get_module_vba_code` to verify the result.
+
+---
+
+### Editing Existing Code
+
+**Prompt:**
+> In module `m_FileIO`, update the `ReadAllText` function — add an encoding parameter as the second argument (`Optional Encoding As String = "UTF-8"`).
+
+**What happens:** the agent calls `get_module_vba_code` to retrieve the current code of `m_FileIO`, locates the target function, then uses `replace_code_range` to replace the signature and body lines.
+
+---
+
+### Line-Range Edits
+
+**Prompt:**
+> In module `m_Utils`, lines 12–18, replace the `MsgBox` call with a log write via `Debug.Print`.
+
+**What happens:** the agent calls `replace_code_range` with parameters `project:="HARNESS"`, `module:="m_Utils"`, `start_line:=12`, `end_line:=18` and the new code.
+
+---
+
+### Reading a File from Disk
+
+**Prompt:**
+> Read the file `C:\Data\config.json` and show its contents.
+
+**What happens:** the agent calls `read_text_file` with the path `C:\Data\config.json`, receives the content, and displays it to the user.
+
+---
+
+### Saving Generated Code to a File
+
+**Prompt:**
+> Save the code of module `m_StringUtils` to `C:\Export\StringUtils.bas`.
+
+**What happens:** the agent calls `get_module_vba_code` to retrieve the module code, then `write_text_file` with the path `C:\Export\StringUtils.bas` and the retrieved content.
+
+---
+
+### Complex Scenario: Audit and Fix
+
+**Prompt:**
+> Find all modules in the `HARNESS` project that use `On Error Resume Next` and replace them with proper error handling using `On Error GoTo`. Save the results to `C:\Reports\audit_log.txt`.
+
+**What happens:**
+1. `list_vba_projects` — retrieves the list of all project modules.
+2. `get_module_vba_code` — reads each module one by one.
+3. `replace_code_range` — replaces the found constructs in each module.
+4. `write_text_file` — saves a report of the changes made.
+
+---
+
+### Working with Selected Code
+
+**Prompt:**
+> I've selected a few functions in the VBA editor. Refactor them: extract the repeated logic into a separate private function `ValidateInput`.
+
+**What happens:** the agent calls `get_selected_code`, receives the selected fragment, analyzes it, and applies changes to the corresponding module via `replace_code_range`.
+
+---
+
 ## Extending with Custom Tools
 
 To add a new tool:
