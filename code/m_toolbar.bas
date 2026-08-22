@@ -5,6 +5,12 @@ Option Explicit
 Public btns As c_buttons
 
 
+' For Word only!
+'Sub Autoexec()
+'    AddTB_LLM
+'End Sub
+
+
 
 Sub AddTB_LLM()
 'Procedure for adding the TOLLBAR_NAME toolbar-------------------------------
@@ -15,7 +21,7 @@ Sub AddTB_LLM()
     
 '---Check if the TOLLBAR_NAME toolbar already exists------------------------------
     For i = 1 To Application.Vbe.CommandBars.Count
-        If Application.CommandBars(i).name = TOLLBAR_NAME Then Exit Sub
+        If Application.Vbe.CommandBars(i).name = TOLLBAR_NAME Then Exit Sub
     Next i
 
 '---Create the TOLLBAR_NAME toolbar--------------------------------------------
