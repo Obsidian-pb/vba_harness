@@ -51,10 +51,14 @@ Private tools_handler As clsHarnessToolsHandler
 ' ============================================================
 '  AGENT INIT
 ' ============================================================
-Public Function Init() As clsHarness
+Public Function Init(Optional ByRef t_handler As clsHarnessToolsHandler = Nothing) As clsHarness
     
     ' Tools handler class
-    Set tools_handler = New clsHarnessToolsHandler
+    If t_handler Is Nothing Then
+        Set tools_handler = New clsHarnessToolsHandler
+    Else
+        Set tools_handler = t_handler
+    End If
     tools_handler.Init
     
     ' Message history collection
@@ -107,8 +111,8 @@ Dim tc As Variant
 '        Set history = New Collection
 '    End If
 
-    ' 0. Add the system prompt
-    history.Add BuildMessageJson("system", llm_system_prompt)
+'    ' 0. Add the system prompt
+'    history.Add BuildMessageJson("system", llm_system_prompt)
 
     ' 1. Add the first user message.
     history.Add BuildMessageJson("user", userPrompt)
