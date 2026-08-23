@@ -111,8 +111,10 @@ Dim tc As Variant
 '        Set history = New Collection
 '    End If
 
-'    ' 0. Add the system prompt
-'    history.Add BuildMessageJson("system", llm_system_prompt)
+    ' 0. Add the system prompt
+    If Len(history) = 0 Then
+        history.Add BuildMessageJson("system", llm_system_prompt)
+    End If
 
     ' 1. Add the first user message.
     history.Add BuildMessageJson("user", userPrompt)

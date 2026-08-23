@@ -248,9 +248,9 @@ End Sub
 
 
 
-Private Sub UserForm_Activate()
-    AgentConfig
-End Sub
+'Private Sub UserForm_Activate()
+'    AgentConfig
+'End Sub
 
 Private Sub UserForm_Initialize()
     Me.Caption = CHAT_LLM_FORM_CAPTION
@@ -279,6 +279,7 @@ Private Sub UserForm_Initialize()
     ' 2. Create the Agent
     Set agent = New clsHarness
     agent.Init
+    AgentConfig
 End Sub
 
 Private Sub AgentConfig()

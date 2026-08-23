@@ -61,7 +61,7 @@ Public Function GetToolsJson() As String
     
     For i = 1 To tools.Count
         Dim tool As clsToolBase
-        Set tool = tools.Item(i)
+        Set tool = tools.item(i)
         
         result = result & "{" & _
             """type"":""function""," & _
@@ -89,7 +89,7 @@ Public Function Execute(ByVal toolName As String, ByVal argsJson As String) As S
     On Error GoTo ErrHandler
     
     Dim tool As clsToolBase
-    Set tool = tools.Item(toolName)
+    Set tool = tools.item(toolName)
     
     Execute = tool.Execute(argsJson)
     Exit Function
