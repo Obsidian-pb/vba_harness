@@ -24,7 +24,7 @@ End Property
 Private Property Get clsToolBase_Description() As String
     clsToolBase_Description = _
         "The tool returns a list of all open documents (VBA projects) " & _
-        "and the components they contain (modules, classes, forms) — only structure " & _
+        "and the components they contain (modules, classes, forms) - only structure " & _
         "and names. The module code itself is NOT read and NOT passed to the agent. " & _
         "Call this tool when you need to know which documents are open " & _
         "and which VBA modules are in them, before requesting the code of a specific module."
@@ -98,7 +98,7 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
                 result = result & "  " & compCount & ". " & compTypeName & _
                          " """ & vbComp.name & """"
                 
-                ' If the module is not empty — show the number of lines
+                ' If the module is not empty - show the number of lines
                 If lineCount > 0 Then
                     result = result & "  (" & lineCount & " lines)"
                 Else
@@ -133,13 +133,13 @@ NextIteration:
                  totalComponents & " component(s)" & vbCrLf
     End If
     
-    clsToolBase_Execute = "{""status"":""ok"",""message"":""" & result & """}"
-    clsToolBase_Execute = Replace(clsToolBase_Execute, """", Chr(34))
+    ' The message is escaped via MakeOk (JsonString), so quotes, backslashes
+    ' and newlines in project/module names cannot break the JSON.
+    clsToolBase_Execute = MakeOk(result)
     Exit Function
 
 ErrHandler:
-    clsToolBase_Execute = "{""status"":""error"",""message"":""Error: " & Err.Description & """}"
-    clsToolBase_Execute = Replace(clsToolBase_Execute, """", Chr(34))
+    clsToolBase_Execute = MakeError("Error: " & Err.Description)
 End Function
 
 
@@ -184,11 +184,7 @@ Private Function GetDocumentType(ByVal vbProj As Object) As String
                 GetDocumentType = "Document (" & ext & ")"
         End Select
     Else
-        ' If file name is not available — could be a new workbook
-        On Error Resume Next
-        Dim isDirty As Boolean
-        isDirty = vbProj.Saved
-        On Error GoTo 0
+        ' If file name is not available - could be a new document
         GetDocumentType = "New Document"
     End If
 End Function
@@ -203,4 +199,3 @@ Private Function ComponentTypeName(ByVal compType As Long) As String
         Case Else: ComponentTypeName = "Unknown (Type=" & compType & ")"
     End Select
 End Function
-

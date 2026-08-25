@@ -236,7 +236,7 @@ Dim prompt As String
     agent.AgentLoop prompt
     
     ' 4. Set the default form caption upon completion
-    LLM_chat_html.Caption = CHAT_LLM_FORM_CAPTION
+    LLM_chat_html.caption = CHAT_LLM_FORM_CAPTION
 End Sub
 
 Private Sub TB_Message_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
@@ -248,12 +248,8 @@ End Sub
 
 
 
-'Private Sub UserForm_Activate()
-'    AgentConfig
-'End Sub
-
 Private Sub UserForm_Initialize()
-    Me.Caption = CHAT_LLM_FORM_CAPTION
+    Me.caption = CHAT_LLM_FORM_CAPTION
     wb_Bowser.Navigate "about:blank"
     WaitForReady
     
@@ -348,7 +344,7 @@ Private Sub UpdateSpinner()
 Static idx As Integer
 Const chars = "/-\|/-\|"
     idx = (idx + 1) Mod Len(chars)
-    LLM_chat_html.Caption = CHAT_LLM_FORM_CAPTION & Mid$(chars, idx + 1, 1)
+    LLM_chat_html.caption = CHAT_LLM_FORM_CAPTION & Mid$(chars, idx + 1, 1)
 End Sub
 
 
@@ -400,9 +396,42 @@ Private Function EscapeHtml(ByVal s As String) As String
     EscapeHtml = s
 End Function
 
-Private Sub WaitForReady()
+' Waits for the embedded browser to become ready (readyState = 4).
+' HI-04: the wait is time-limited so the Visio UI cannot hang indefinitely.
+' Returns True when the browser became ready, False on timeout or on error.
+Private Function WaitForReady() As Boolean
+    Const TIMEOUT_SEC As Double = 30
+    Dim startTime As Double
+
+    On Error GoTo ErrHandler
+
+    startTime = Timer
     Do While wb_Bowser.Busy Or wb_Bowser.readyState <> 4
         DoEvents
+
+        ' Timeout guard: if the browser never reaches ready state 4,
+        ' stop waiting and inform the user instead of hanging the UI.
+        If Timer - startTime > TIMEOUT_SEC Then
+            MsgBox "The embedded browser did not become ready within " & _
+                   CStr(TIMEOUT_SEC) & " seconds." & vbCrLf & vbCrLf & _
+                   "The chat window may not work correctly." & vbCrLf & _
+                   "Please close and reopen the chat window.", _
+                   vbExclamation, "Browser timeout"
+            WaitForReady = False
+            Exit Function
+        End If
     Loop
-End Sub
+
+    WaitForReady = True
+    Exit Function
+
+ErrHandler:
+    ' Handle errors (e.g., the browser control is unavailable) instead of
+    ' leaving the loop running forever or crashing the form.
+    MsgBox "Error while waiting for the embedded browser:" & vbCrLf & _
+           Err.Description & vbCrLf & vbCrLf & _
+           "The chat page may not be displayed correctly.", _
+           vbCritical, "Browser error"
+    WaitForReady = False
+End Function
 

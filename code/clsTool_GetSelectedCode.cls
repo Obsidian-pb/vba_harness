@@ -45,14 +45,12 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
     On Error GoTo ErrHandler
     
     ' Get the active code window
-'    Application.Vbe.MainWindow.SetFocus
     On Error Resume Next
     Set cp = Application.Vbe.ActiveCodePane
-'    LLM_chat_html.Show
     On Error GoTo 0
     
     If cp Is Nothing Then
-        clsToolBase_Execute = "{""status"":""error"",""message"":""No active editor window""}"
+        clsToolBase_Execute = MakeError("No active editor window")
         Exit Function
     End If
     
@@ -61,7 +59,7 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
     ' Get selection coordinates
     cp.GetSelection startLine, startCol, endLine, endCol
     
-    ' If nothing is selected (just cursor) — get the entire code of the active module
+    ' If nothing is selected (just cursor) - get the entire code of the active module
     If startLine = endLine And startCol = endCol Then
         If cm.CountOfLines > 0 Then
             resultCode = cm.Lines(1, cm.CountOfLines)
@@ -69,7 +67,7 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
             resultCode = ""
         End If
     Else
-        ' If a range is selected — extract it
+        ' If a range is selected - extract it
         lineCount = endLine - startLine + 1
         resultCode = cm.Lines(startLine, lineCount)
     End If
@@ -78,10 +76,10 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
     Dim responseMsg As String
     responseMsg = "Code from module '" & cm.parent.name & "':" & vbCrLf & vbCrLf & resultCode
        
-    clsToolBase_Execute = "{""status"":""ok"",""message"":""" & responseMsg & """}"
+    clsToolBase_Execute = MakeOk(responseMsg)
     Exit Function
     
 ErrHandler:
-    clsToolBase_Execute = "{""status"":""error"",""message"":""Error: " & Err.Description & """}"
+    clsToolBase_Execute = MakeError("Error: " & Err.Description)
 End Function
 

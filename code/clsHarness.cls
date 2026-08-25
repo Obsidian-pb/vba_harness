@@ -106,13 +106,13 @@ Dim assistantMsg As String
 Dim tc As Variant
 
 
-'    ' If message history has not been created yet — create it
-'    If history Is Nothing Then
-'        Set history = New Collection
-'    End If
+    ' If message history has not been created yet — create it
+    If history Is Nothing Then
+        Set history = New Collection
+    End If
 
     ' 0. Add the system prompt
-    If Len(history) = 0 Then
+    If history.Count = 0 Then
         history.Add BuildMessageJson("system", llm_system_prompt)
     End If
 
@@ -189,6 +189,8 @@ End Sub
 '  interferes with parsing tool_calls).
 ' ============================================================
 Private Function CallLLMOnce(ByVal messagesJson As String) As String
+Dim startTime As Variant
+
     On Error GoTo ErrHandler
 
     Dim http As Object
@@ -211,13 +213,15 @@ Private Function CallLLMOnce(ByVal messagesJson As String) As String
 
     http.send payload
 
-    Dim startTime As Single
     Dim i As Long: i = 0
-    startTime = Timer
+    startTime = Now
     Do While http.readyState <> 4
         DoEvents
 
-        If Timer - startTime > 180 Then
+        ' HI-05: use DateDiff on the full date-time value (Now) instead of
+        ' Timer-arithmetic difference, which turns negative (and is unreliable)
+        ' when the system clock crosses midnight during the wait.
+        If DateDiff("s", startTime, Now) > 180 Then
             RaiseEvent OnSystem("Timeout 180s")
             CallLLMOnce = ""
             Exit Function
@@ -275,10 +279,55 @@ End Sub
 ' ============================================================
 
 ' Extracts choices[0].message.content (final text) from the LLM response.
+' MD-02: primary extraction uses structural JSON parsing (JsonConverter),
+' which is immune to nested fields, whitespace, escaped backslashes and
+' alternative API layouts. The old InStr manual search remains only as
+' an emergency fallback if the JSON cannot be parsed.
 Private Function ExtractAssistantContent(ByVal json As String, Optional ByVal key As String = """content"":") As String
+    On Error GoTo Fallback
+
+    Dim root As Object
+    Dim choices As Collection
+    Dim choice As Object
+    Dim message As Object
+    Dim val As Variant
+
+    Set root = JsonConverter.ParseJson(json)
+    If root Is Nothing Then GoTo Fallback
+
+    If root.Exists("choices") Then
+        Set choices = root("choices")
+        If choices.Count > 0 Then
+            Set choice = choices(1)
+            If choice.Exists("message") Then
+                Set message = choice("message")
+                If message.Exists("content") Then
+                    val = message("content")
+                    If IsNull(val) Or IsEmpty(val) Then
+                        ExtractAssistantContent = ""
+                    Else
+                        ExtractAssistantContent = CStr(val)
+                    End If
+                    Exit Function
+                End If
+            End If
+        End If
+    End If
+
+    ' No content found structurally — try the manual fallback.
+    GoTo Fallback
+
+Fallback:
+    ExtractAssistantContent = ExtractContent_Manual(json, key)
+End Function
+
+
+' Manual InStr fallback used only when structural JSON parsing fails
+' (previous logic preserved as an emergency path).
+Private Function ExtractContent_Manual(ByVal json As String, ByVal key As String) As String
     Dim pos As Long, startPos As Long, endPos As Long
     pos = InStr(1, json, key, vbTextCompare)
-    If pos = 0 Then ExtractAssistantContent = "": Exit Function
+    If pos = 0 Then ExtractContent_Manual = "": Exit Function
 
     startPos = pos + Len(key)
     ' Skip spaces and opening quote
@@ -289,7 +338,7 @@ Private Function ExtractAssistantContent(ByVal json As String, Optional ByVal ke
 
     ' If content was null — return empty string
     If LCase$(Mid$(json, startPos - 1, 4)) = "null" Then
-        ExtractAssistantContent = ""
+        ExtractContent_Manual = ""
         Exit Function
     End If
 
@@ -299,37 +348,96 @@ Private Function ExtractAssistantContent(ByVal json As String, Optional ByVal ke
         endPos = endPos + 1
     Loop
 
-    ExtractAssistantContent = JsonUnescape(Mid$(json, startPos, endPos - startPos))
+    ExtractContent_Manual = JsonUnescape(Mid$(json, startPos, endPos - startPos))
 End Function
 
 
-' Searches for "reasoning_content" (DeepSeek) and "reasoning" (other models) fields.
+' Extracts the reasoning field ("reasoning_content" for DeepSeek,
+' "reasoning" for other models).
+' MD-02: primary extraction uses structural JSON parsing and checks both
+' the standard location choices[0].message.<key> and top-level <key>.
+' The old InStr manual search remains only as a fallback if parsing fails.
 Private Function ExtractReasoning(ByVal json As String) As String
+    On Error GoTo Fallback
+
+    Dim root As Object
+    Dim choices As Collection
+    Dim choice As Object
+    Dim message As Object
+    Dim candidates As Variant
+    Dim i As Long
+    Dim val As Variant
+
+    Set root = JsonConverter.ParseJson(json)
+    If root Is Nothing Then GoTo Fallback
+
+    candidates = Array("reasoning_content", "reasoning")
+
+    For i = LBound(candidates) To UBound(candidates)
+        ' Some APIs emit the reasoning field at the top level of the response.
+        If root.Exists(candidates(i)) Then
+            val = root(candidates(i))
+            If Not (IsNull(val) Or IsEmpty(val)) Then
+                ExtractReasoning = CStr(val)
+                Exit Function
+            End If
+        End If
+
+        ' Standard OpenAI-compatible location: choices[0].message.<key>
+        If root.Exists("choices") Then
+            Set choices = root("choices")
+            If choices.Count > 0 Then
+                Set choice = choices(1)
+                If choice.Exists("message") Then
+                    Set message = choice("message")
+                    If message.Exists(candidates(i)) Then
+                        val = message(candidates(i))
+                        If Not (IsNull(val) Or IsEmpty(val)) Then
+                            ExtractReasoning = CStr(val)
+                            Exit Function
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    Next i
+
+    ' Not found structurally — try the manual fallback.
+    GoTo Fallback
+
+Fallback:
+    ExtractReasoning = ExtractReasoning_Manual(json)
+End Function
+
+
+' Manual InStr fallback used only when structural JSON parsing fails
+' (previous logic preserved as an emergency path).
+Private Function ExtractReasoning_Manual(ByVal json As String) As String
     Dim candidates As Variant
     Dim i As Long
     candidates = Array("""reasoning_content"":", """reasoning"":")
-    
+
     For i = LBound(candidates) To UBound(candidates)
         Dim key As String
         key = candidates(i)
-        
+
         Dim pos As Long
         pos = InStr(1, json, key, vbTextCompare)
         If pos > 0 Then
             Dim startPos As Long, endPos As Long
             startPos = pos + Len(key)
-            
+
             ' Skip spaces
             Do While startPos <= Len(json) And Mid$(json, startPos, 1) = " "
                 startPos = startPos + 1
             Loop
-            
+
             ' If null — skip
             If LCase$(Mid$(json, startPos, 4)) = "null" Then
-                ExtractReasoning = ""
+                ExtractReasoning_Manual = ""
                 Exit Function
             End If
-            
+
             ' If it starts with a quote — extract the string
             If Mid$(json, startPos, 1) = """" Then
                 startPos = startPos + 1
@@ -338,93 +446,102 @@ Private Function ExtractReasoning(ByVal json As String) As String
                     If Mid$(json, endPos, 1) = """" And Mid$(json, endPos - 1, 1) <> "\" Then Exit Do
                     endPos = endPos + 1
                 Loop
-                ExtractReasoning = JsonUnescape(Mid$(json, startPos, endPos - startPos))
+                ExtractReasoning_Manual = JsonUnescape(Mid$(json, startPos, endPos - startPos))
                 Exit Function
             End If
         End If
     Next i
-    
-    ExtractReasoning = ""
+
+    ExtractReasoning_Manual = ""
 End Function
 
 
 ' Parses the tool_calls array from the LLM response.
 ' Returns a Collection where each element is a Dictionary
 ' with keys "id", "name", "arguments".
+' Parses the tool_calls array from a complete LLM response.
+' The response is parsed as JSON first; brackets inside JSON strings
+' therefore cannot affect the traversal.
+' Returns a Collection where each element is a Dictionary
+' with keys "id", "name", "arguments".
 Private Function ParseToolCalls(ByVal json As String) As Collection
-    ' Search for the "tool_calls":[ ... ] block
-    Dim key As String, pos As Long
-    key = """tool_calls"":"
-    pos = InStr(1, json, key, vbTextCompare)
-    If pos = 0 Then Set ParseToolCalls = Nothing: Exit Function
-
-    ' Find the opening square bracket of the array
-    Dim arrStart As Long
-    arrStart = InStr(pos + Len(key), json, "[")
-    If arrStart = 0 Then Set ParseToolCalls = Nothing: Exit Function
-
-    ' Find the matching closing bracket
-    Dim depth As Long, i As Long, arrEnd As Long
-    depth = 0
-    For i = arrStart To Len(json)
-        Select Case Mid$(json, i, 1)
-            Case "[": depth = depth + 1
-            Case "]": depth = depth - 1
-                If depth = 0 Then arrEnd = i: Exit For
-        End Select
-    Next i
-    If arrEnd = 0 Then Set ParseToolCalls = Nothing: Exit Function
-
-    Dim arrText As String
-    arrText = Mid$(json, arrStart + 1, arrEnd - arrStart - 1)
-    If Trim$(arrText) = "" Then Set ParseToolCalls = Nothing: Exit Function
-
-    ' Split the array into individual {...} objects by matching brackets
+    Dim root As Object
+    Dim choices As Collection
+    Dim choice As Object
+    Dim message As Object
+    Dim toolCalls As Collection
+    Dim callValue As Variant
+    Dim toolCall As Object
+    Dim func As Object
     Dim result As Collection
+    Dim item As Object
+    Dim value As Variant
+    Dim s As String
+
+    On Error GoTo ParseError
+
+    ' Parse the complete response. Do not search for delimiters in the text.
+    Set root = JsonConverter.ParseJson(json)
+
+    If Not root.Exists("choices") Then GoTo NoToolCalls
+    Set choices = root("choices")
+    If choices.Count = 0 Then GoTo NoToolCalls
+
+    Set choice = choices(1)
+    If Not choice.Exists("message") Then GoTo NoToolCalls
+    Set message = choice("message")
+    If Not message.Exists("tool_calls") Then GoTo NoToolCalls
+
+    Set toolCalls = message("tool_calls")
+    If toolCalls.Count = 0 Then GoTo NoToolCalls
+
     Set result = New Collection
+    For Each callValue In toolCalls
+        Set toolCall = callValue
+        If toolCall.Exists("function") Then
+            Set func = toolCall("function")
+            If func.Exists("name") Then
+                Set item = CreateObject("Scripting.Dictionary")
 
-    Dim objStart As Long, objEnd As Long, d As Long
-    i = 1
-    Do While i <= Len(arrText)
-        If Mid$(arrText, i, 1) = "{" Then
-            objStart = i
-            d = 0
-            Do While i <= Len(arrText)
-                Select Case Mid$(arrText, i, 1)
-                    Case "{": d = d + 1
-                    Case "}": d = d - 1
-                        If d = 0 Then objEnd = i: Exit Do
-                End Select
-                i = i + 1
-            Loop
+                If toolCall.Exists("id") Then
+                    value = toolCall("id")
+                    If IsNull(value) Then item("id") = "" Else item("id") = CStr(value)
+                Else
+                    item("id") = ""
+                End If
 
-            If objEnd > 0 Then
-                Dim objText As String
-                objText = Mid$(arrText, objStart, objEnd - objStart + 1)
+                value = func("name")
+                If IsNull(value) Then item("name") = "" Else item("name") = CStr(value)
 
-                ' Extract id, name, arguments from one tool_call object
-                Dim dict As Object
-                Set dict = CreateObject("Scripting.Dictionary")
-                dict("id") = ExtractJsonString(objText, "id")
-                dict("name") = ExtractJsonString(objText, "name")
-                dict("arguments") = ExtractJsonString(objText, "arguments")
-                result.Add dict
+                ' arguments is a JSON string and must remain a string.
+                If func.Exists("arguments") Then
+                    value = func("arguments")
+                    If IsNull(value) Then
+                        s = ""
+                    Else
+                        s = CStr(value)
+                    End If
+                Else
+                    s = ""
+                End If
+                item("arguments") = s
+                result.Add item
             End If
         End If
-        i = i + 1
-    Loop
+    Next callValue
 
-    If result.Count = 0 Then
-        Set ParseToolCalls = Nothing
-    Else
-        Set ParseToolCalls = result
-    End If
+    If result.Count = 0 Then GoTo NoToolCalls
+    Set ParseToolCalls = result
+    Exit Function
+
+NoToolCalls:
+    Set ParseToolCalls = Nothing
+    Exit Function
+
+ParseError:
+    Log "[ParseToolCalls] Invalid LLM JSON: " & Err.Description
+    Set ParseToolCalls = Nothing
 End Function
-
-
-
-' ============================================================
-'  JSON FUNCTIONS
 ' ============================================================
 ' Builds a JSON message {role, content}.
 Private Function BuildMessageJson(ByVal role As String, ByVal content As String) As String
@@ -435,10 +552,12 @@ Private Function BuildMessageJson(ByVal role As String, ByVal content As String)
 End Function
 
 ' Builds a JSON message with role=tool and the tool result.
+' MD-03: the tool_call_id is escaped via JsonString so that any
+' non-standard identifier (quotes, backslashes, etc.) cannot break JSON.
 Private Function BuildToolMessageJson(ByVal toolCallId As String, ByVal content As String) As String
     BuildToolMessageJson = "{" & _
         """role"":""tool""," & _
-        """tool_call_id"":""" & toolCallId & """," & _
+        """tool_call_id"":" & JsonString(toolCallId) & "," & _
         """content"":" & JsonString(content) & _
     "}"
 End Function

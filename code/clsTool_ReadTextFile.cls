@@ -44,15 +44,26 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
     
     file_path = ResolveFilePath(file_path)
     
-    If Dir$(file_path) = "" Then
+    ' IO-02: file existence is checked via FileSystemObject.FileExists
+    ' instead of Dir$, which is unreliable for special paths and files
+    ' with non-standard attributes.
+    If Not FileExists(file_path) Then
         clsToolBase_Execute = "{""status"":""error"",""message"":" & JsonString("File not found: " & file_path) & "}"
         Exit Function
     End If
     
+    ' IO-02: the read operation has its own error handling - the file may
+    ' exist but be inaccessible (permissions, locking, etc.).
     Dim content As String
+    On Error GoTo ReadErrHandler
     content = ReadFileUTF8(file_path)
+    On Error GoTo ErrHandler
     
     clsToolBase_Execute = "{""status"":""ok"",""message"":" & JsonString(content) & "}"
+    Exit Function
+    
+ReadErrHandler:
+    clsToolBase_Execute = "{""status"":""error"",""message"":" & JsonString("Failed to read file: " & file_path & ". " & Err.Description) & "}"
     Exit Function
     
 ErrHandler:

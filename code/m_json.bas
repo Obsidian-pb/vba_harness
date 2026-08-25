@@ -23,6 +23,19 @@ Public Function JsonString(ByVal s As String) As String
     JsonString = JsonConverter.ConvertToJson(s)
 End Function
 
+' Builds a JSON response object {"status":"ok","message":<escaped msg>}.
+' The message is escaped via JsonString, so quotes, backslashes,
+' and newlines inside the message cannot break the JSON structure.
+Public Function MakeOk(ByVal msg As String) As String
+    MakeOk = "{""status"":""ok"",""message"":" & JsonString(msg) & "}"
+End Function
+
+' Builds a JSON response object {"status":"error","message":<escaped msg>}.
+' The message is escaped via JsonString.
+Public Function MakeError(ByVal msg As String) As String
+    MakeError = "{""status"":""error"",""message"":" & JsonString(msg) & "}"
+End Function
+
 ' Extracts a field value from a JSON object and returns it as string.
 ' Supports string/number/boolean/null values.
 ' For object/array values returns their JSON representation.
@@ -147,4 +160,3 @@ Private Function FallbackJsonUnescape(ByVal s As String) As String
 
     FallbackJsonUnescape = s
 End Function
-

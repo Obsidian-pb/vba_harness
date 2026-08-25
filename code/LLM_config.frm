@@ -36,9 +36,9 @@ End Sub
 
 Private Sub UserForm_Activate()
     On Error Resume Next
-    tb_base_url.text = CStr(GetSettingFromRegistry(REG_LLM_API_URL, "https://api.aitunnel.ru/v1/chat/completions"))
-    tb_model_main.text = CStr(GetSettingFromRegistry(REG_LLM_MODEL_ID, "deepseek-v4-pro"))
-    tb_model_fast.text = CStr(GetSettingFromRegistry(REG_LLM_MODEL_FAST_ID, "deepseek-v4-flash"))
+    tb_base_url.text = CStr(GetSettingFromRegistry(REG_LLM_API_URL, DEF_LLM_API_URL))
+    tb_model_main.text = CStr(GetSettingFromRegistry(REG_LLM_MODEL_ID, DEF_LLM_MODEL_ID))
+    tb_model_fast.text = CStr(GetSettingFromRegistry(REG_LLM_MODEL_FAST_ID, DEF_LLM_MODEL_FAST_ID))
     tb_api_key.text = CStr(GetSettingFromRegistry(REG_LLM_API_KEY, ""))
     tb_system_prompt.text = CStr(GetSettingFromRegistry(REG_LLM_SYSTEM_PROMPT, ""))
     On Error GoTo 0

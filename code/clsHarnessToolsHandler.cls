@@ -63,11 +63,13 @@ Public Function GetToolsJson() As String
         Dim tool As clsToolBase
         Set tool = tools.item(i)
         
+        ' name and Description are escaped via JsonString so that quotes,
+        ' backslashes and newlines in tool metadata cannot break the JSON.
         result = result & "{" & _
             """type"":""function""," & _
             """function"":{" & _
-                """name"":""" & tool.name & """," & _
-                """description"":""" & tool.Description & """," & _
+                """name"":" & JsonString(tool.name) & "," & _
+                """description"":" & JsonString(tool.Description) & "," & _
                 """parameters"":" & tool.Schema & _
             "}" & _
         "}"
@@ -82,7 +84,7 @@ End Function
 ' Execute tool by name
 Public Function Execute(ByVal toolName As String, ByVal argsJson As String) As String
     If tools Is Nothing Then
-        Execute = "{""error"":""Tool registry is not initialized""}"
+        Execute = "{""error"":" & JsonString("Tool registry is not initialized") & "}"
         Exit Function
     End If
     
@@ -95,7 +97,6 @@ Public Function Execute(ByVal toolName As String, ByVal argsJson As String) As S
     Exit Function
     
 ErrHandler:
-    Execute = "{""error"":""Tool not found: " & toolName & """}"
+    Execute = "{""error"":" & JsonString("Tool not found: " & toolName) & "}"
 End Function
-
 
