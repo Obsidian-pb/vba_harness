@@ -50,34 +50,24 @@ Dim code As String
     End If
     
     If project_name = "" Then
-        ' If the project name is not specified, assume the current project
-'        project_name = Application.Vbe.ActiveVBProject.name
-        clsToolBase_Execute = "{""status"":""error"",""message"":""The VBA project name has not been specified.""}"
+        ' The active project could not be determined
+        clsToolBase_Execute = MakeError("The VBA project name has not been specified.")
         Exit Function
     End If
 
-'   Need review:
-'    ' If it is supposed to get the Harness code
-'    If project_name = HARNESS_NAME Then
-'        clsToolBase_Execute = "{""status"":""error"",""message"":""The '" & HARNESS_NAME & "' VBA project program code is not available""}"
-'        Exit Function
-'    End If
-    
     ' Find the project by name
     If module_name = "" Then
         code = GetAllProjectCode(project_name)
-        clsToolBase_Execute = "{""status"":""ok"",""message"":""Full VBA project code is: " & Chr(10) & Chr(10) & code & """}"
+        clsToolBase_Execute = MakeOk("Full VBA project code is: " & Chr(10) & Chr(10) & code)
     Else
         code = GetVbaCodeProj(project_name, module_name)
-        clsToolBase_Execute = "{""status"":""ok"",""message"":""Module '" & module_name & "' VBA code is: " & Chr(10) & Chr(10) & code & """}"
+        clsToolBase_Execute = MakeOk("Module '" & module_name & "' VBA code is: " & Chr(10) & Chr(10) & code)
     End If
-    
-    
     
     Exit Function
     
 ErrHandler:
-    clsToolBase_Execute = "{""status"":""error"",""message"":""" & Err.Description & """}"
+    clsToolBase_Execute = MakeError(Err.Description)
 End Function
 
 

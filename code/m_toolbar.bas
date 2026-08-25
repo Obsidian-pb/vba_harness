@@ -58,14 +58,14 @@ Sub AddButtons()
 '---Add buttons to the TOLLBAR_NAME toolbar --------------------------------
 '---"Chat" button-------------------------------------------------
     With Bar.Controls.Add(Type:=msoControlButton)
-        .Caption = "Chat"
+        .caption = "Chat"
         .Tag = "LLM chat"
         .TooltipText = "Open chat"
         .FaceID = 201
     End With
 '---"Settings" button -------------------------------------------------
     With Bar.Controls.Add(Type:=msoControlButton)
-        .Caption = "Settings"
+        .caption = "Settings"
         .Tag = "LLM settings"
         .TooltipText = "LLM Settings"
         .FaceID = 642

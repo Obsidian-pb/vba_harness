@@ -229,6 +229,10 @@ Custom tools can do anything VBA can do — manipulate Office documents, query d
 
 ---
 
+## Side modules
+
+VBA-Harness use VBA module `JsonConverter.bas` ([https://github.com/VBA-tools/VBA-JSON](https://github.com/VBA-tools/VBA-JSON)) by Tim Hall.
+
 ## License
 
 [MIT](LICENSE)

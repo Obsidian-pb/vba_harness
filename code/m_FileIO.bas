@@ -9,38 +9,87 @@ Option Explicit
 ' Reads entire text file in UTF-8 encoding
 Public Function ReadFileUTF8(ByVal filePath As String) As String
     Dim stream As Object
+    Dim result As String
+    Dim errNum As Long
+    Dim errDesc As String
+    
+    On Error GoTo CleanFail
+    
     Set stream = CreateObject("ADODB.Stream")
     stream.Type = 2                       ' adTypeText = 2
     stream.CharSet = "utf-8"
     stream.Open
     stream.LoadFromFile filePath
-    ReadFileUTF8 = stream.ReadText(-1)    ' adReadAll = -1
-    stream.Close
-    Set stream = Nothing
+    result = stream.ReadText(-1)          ' adReadAll = -1
+    
+    GoTo Cleanup
+    
+CleanFail:
+    errNum = Err.Number
+    errDesc = Err.Description
+    
+Cleanup:
+    ' IO-03: unified resource cleanup - the stream is closed and released
+    ' even if an error occurred during the operation above.
+    On Error Resume Next
+    If Not stream Is Nothing Then
+        If stream.State <> 0 Then stream.Close
+        Set stream = Nothing
+    End If
+    On Error GoTo 0
+    
+    If errNum <> 0 Then
+        Err.Raise errNum, "ReadFileUTF8", errDesc
+    End If
+    
+    ReadFileUTF8 = result
 End Function
 
 ' Writes text to a file in UTF-8 encoding (without BOM).
 ' Overwrites existing file, creates missing folders.
 Public Sub WriteFileUTF8(ByVal filePath As String, ByVal content As String)
     Dim fso As Object
+    Dim stream As Object
+    Dim folderPath As String
+    Dim errNum As Long
+    Dim errDesc As String
+    
+    On Error GoTo CleanFail
+    
     Set fso = CreateObject("Scripting.FileSystemObject")
     
-    Dim folderPath As String
     folderPath = fso.GetParentFolderName(filePath)
     If folderPath <> "" Then
         EnsureFolderExists folderPath
     End If
     
-    Dim stream As Object
     Set stream = CreateObject("ADODB.Stream")
     stream.Type = 2                       ' adTypeText = 2
     stream.CharSet = "utf-8"
     stream.Open
     stream.WriteText content
     stream.SaveToFile filePath, 2         ' adSaveCreateOverWrite = 2
-    stream.Close
-    Set stream = Nothing
+    
+    GoTo Cleanup
+    
+CleanFail:
+    errNum = Err.Number
+    errDesc = Err.Description
+    
+Cleanup:
+    ' IO-03: unified resource cleanup - the stream is closed and released
+    ' even if an error occurred during the operation above.
+    On Error Resume Next
+    If Not stream Is Nothing Then
+        If stream.State <> 0 Then stream.Close
+        Set stream = Nothing
+    End If
     Set fso = Nothing
+    On Error GoTo 0
+    
+    If errNum <> 0 Then
+        Err.Raise errNum, "WriteFileUTF8", errDesc
+    End If
 End Sub
 
 ' Resolves a path to absolute form. A relative path
@@ -69,6 +118,15 @@ Public Function ResolveFilePath(ByVal filePath As String) As String
     End If
     
     ResolveFilePath = filePath
+End Function
+
+' Checks whether a file exists using FileSystemObject.FileExists.
+' More reliable than Dir$ for special paths and files with non-standard attributes.
+Public Function FileExists(ByVal filePath As String) As Boolean
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    FileExists = fso.FileExists(filePath)
+    Set fso = Nothing
 End Function
 
 ' Recursively creates a folder with all nested subfolders.

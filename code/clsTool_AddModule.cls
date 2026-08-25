@@ -37,10 +37,10 @@ End Property
 Private Property Get clsToolBase_Description() As String
     clsToolBase_Description = _
         "The tool creates a new component (module, class or form) in a VBA project. " & _
-        "Parameters: 'project_name' — project name (if not specified, the active one is used); " & _
-        "'module_name' — name of the new component (required); " & _
-        "'module_type' — component type: 'module' (standard module), 'class' (class) or 'form' (user form); " & _
-        "'code' — optional initial code to insert into the new module."
+        "Parameters: 'project_name' - project name (if not specified, the active one is used); " & _
+        "'module_name' - name of the new component (required); " & _
+        "'module_type' - component type: 'module' (standard module), 'class' (class) or 'form' (user form); " & _
+        "'code' - optional initial code to insert into the new module."
 End Property
 
 Private Property Get clsToolBase_Schema() As String
@@ -76,7 +76,7 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
 
     ' Check required field
     If module_name = "" Then
-        clsToolBase_Execute = "{""status"":""error"",""message"":""Module name (module_name) not specified""}"
+        clsToolBase_Execute = MakeError("Module name (module_name) not specified")
         Exit Function
     End If
 
@@ -89,14 +89,13 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
     End If
 
     If vbProj Is Nothing Then
-        clsToolBase_Execute = "{""status"":""error"",""message"":""Project not found""}"
+        clsToolBase_Execute = MakeError("Project not found")
         Exit Function
     End If
     
     ' Check if the modified project is the current Harness project
     If vbProj.name = HARNESS_NAME Then
-        clsToolBase_Execute = "{""status"":""error"",""message"":""Cannot make changes to project '" & vbProj.name & "'""}"
-'        clsToolBase_Execute = MakeError("Cannot make changes to project '" & vbProj.name & "'")
+        clsToolBase_Execute = MakeError("Cannot make changes to project '" & vbProj.name & "'")
         Exit Function
     End If
 
@@ -106,7 +105,7 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
     Set existingComp = vbProj.VBComponents(module_name)
     On Error GoTo 0
     If Not existingComp Is Nothing Then
-        clsToolBase_Execute = "{""status"":""error"",""message"":""Component with name '" & module_name & "' already exists in the project""}"
+        clsToolBase_Execute = MakeError("Component with name '" & module_name & "' already exists in the project")
         Exit Function
     End If
 
@@ -117,7 +116,7 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
             compType = vbext_ct_ClassModule
         Case "form", "userform", "user_form"
             compType = vbext_ct_MSForm
-        Case Else   ' Default — standard module
+        Case Else   ' Default - standard module
             compType = vbext_ct_StdModule
     End Select
 
@@ -126,16 +125,10 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
     Set newComp = vbProj.VBComponents.Add(compType)
     newComp.name = module_name
 
-    ' If code is provided — insert it into the module
+    ' If code is provided - insert it into the module
     If code <> "" Then
         Dim cm As Object
         Set cm = newComp.CodeModule
-        ' There is no point in this because Option Explicit is not inserted by default, so this code can be removed later
-        ' Delete the default line (if any) to avoid having Option Explicit twice
-        ' But for a form, the first line could be something else
-'        If cm.CountOfLines > 0 Then
-'            cm.DeleteLines 1, cm.CountOfLines
-'        End If
         cm.AddFromString code
     End If
 
@@ -153,10 +146,10 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
         resultMsg = resultMsg & " Code inserted (" & Len(code) & " characters)."
     End If
 
-    clsToolBase_Execute = "{""status"":""ok"",""message"":""" & resultMsg & """}"
+    clsToolBase_Execute = MakeOk(resultMsg)
     Exit Function
 
 ErrHandler:
-    clsToolBase_Execute = "{""status"":""error"",""message"":""Error: " & Err.Description & """}"
+    clsToolBase_Execute = MakeError("Error: " & Err.Description)
 End Function
 

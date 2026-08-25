@@ -25,9 +25,9 @@ Dim llm_system_prompt As String
 
     ' Get LLM settings
     On Error Resume Next
-    llm_api_url = CStr(GetSettingFromRegistry(REG_LLM_API_URL, "https://api.aitunnel.ru/v1/chat/completions"))
-    llm_model_id = CStr(GetSettingFromRegistry(REG_LLM_MODEL_ID, "gpt-5.1"))
-    llm_model_fast_id = CStr(GetSettingFromRegistry(REG_LLM_MODEL_FAST_ID, "gpt-5.1"))
+    llm_api_url = CStr(GetSettingFromRegistry(REG_LLM_API_URL, DEF_LLM_API_URL))
+    llm_model_id = CStr(GetSettingFromRegistry(REG_LLM_MODEL_ID, DEF_LLM_MODEL_ID))
+    llm_model_fast_id = CStr(GetSettingFromRegistry(REG_LLM_MODEL_FAST_ID, DEF_LLM_MODEL_FAST_ID))
     llm_api_key = CStr(GetSettingFromRegistry(REG_LLM_API_KEY, ""))
     llm_system_prompt = CStr(GetSettingFromRegistry(REG_LLM_SYSTEM_PROMPT, ""))
     

@@ -7,7 +7,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-' Class: clsTool_WriteTextFile - Tool: write text content to a file (Windows-1251 / ANSI)
+' Class: clsTool_WriteTextFile - Tool: write text content to a file (UTF-8)
 Option Explicit
 Implements clsToolBase
 
@@ -16,7 +16,7 @@ Private Property Get clsToolBase_Name() As String
 End Property
 
 Private Property Get clsToolBase_Description() As String
-    clsToolBase_Description = "Writes text content to a file in Windows-1251 (ANSI) encoding. " & _
+    clsToolBase_Description = "Writes text content to a file in UTF-8 encoding. " & _
         "If the file already exists, it will be completely overwritten. Missing folders are created automatically. " & _
         "Use this tool when you need to save, write or create a text file."
 End Property

@@ -26,31 +26,40 @@ End Sub
 Private Sub Class_Terminate()
     Set ComButOpenChat = Nothing
     Set ComButLLMSettings = Nothing
-
 End Sub
-
-
 
 
 
 Private Sub ComButOpenChat_Click(ByVal Ctrl As Office.CommandBarButton, CancelDefault As Boolean)
-'---Enable error handling - to prevent class disposal when trying to access nothing
-    On Error GoTo Tail
-    
-    LLM_chat_html.Show
+' ERR-02: log Err.Number/Err.Description and notify the user instead of
+' silently swallowing the error when jumping to the tail label.
+    On Error GoTo ErrHandler
 
+    LLM_chat_html.Show
     
-Tail:
-    '---Exit the handler procedure
+    Exit Sub
+
+ErrHandler:
+    Log "[c_buttons.ComButOpenChat_Click] Error " & Err.Number & ": " & Err.Description
+    MsgBox "Could not open Chat." & vbCrLf & _
+           "Error: " & Err.Number & " — " & Err.Description, _
+           vbExclamation + vbOKOnly, "LLM Harness"
+    On Error GoTo 0
 End Sub
 
 Private Sub ComButLLMSettings_Click(ByVal Ctrl As Office.CommandBarButton, CancelDefault As Boolean)
-'---Enable error handling - to prevent class disposal when trying to access nothing
-    On Error GoTo Tail
-    
+' ERR-02: log Err.Number/Err.Description and notify the user instead of
+' silently swallowing the error when jumping to the tail label.
+    On Error GoTo ErrHandler
+
     LLM_config.Show
     
-    
-Tail:
-    '---Exit the handler procedure
+    Exit Sub
+
+ErrHandler:
+    Log "[c_buttons.ComButLLMSettings_Click] Error " & Err.Number & ": " & Err.Description
+    MsgBox "Could not open Settings." & vbCrLf & _
+           "Error: " & Err.Number & " — " & Err.Description, _
+           vbExclamation + vbOKOnly, "LLM Harness"
+    On Error GoTo 0
 End Sub
