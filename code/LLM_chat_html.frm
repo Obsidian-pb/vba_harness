@@ -248,6 +248,10 @@ End Sub
 
 
 
+Private Sub UserForm_Activate()
+    AgentConfig
+End Sub
+
 Private Sub UserForm_Initialize()
     Me.caption = CHAT_LLM_FORM_CAPTION
     wb_Bowser.Navigate "about:blank"

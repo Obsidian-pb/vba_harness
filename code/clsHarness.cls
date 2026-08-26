@@ -81,7 +81,9 @@ Public Function Set_LLM(ByVal api_url As String, _
     
     llm_model_id = model_id
     llm_api_key = api_key
-    llm_system_prompt = system_prompt
+    If llm_system_prompt = "" Then
+        llm_system_prompt = system_prompt
+    End If
     agent_max_turns = max_turns
     tick_interval = tick_intrvl
     
