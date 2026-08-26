@@ -1,5 +1,7 @@
 # VBA-Harness
 
+**English** | **[Русский](README.ru.md)**
+
 LLM Harness for VBA coding — an agentic coding framework that runs entirely inside Microsoft Office VBA.
 
 ## Overview
