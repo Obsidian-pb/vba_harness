@@ -46,8 +46,10 @@ Cleanup:
 End Function
 
 ' Writes text to a file in UTF-8 encoding (without BOM).
-' Overwrites existing file, creates missing folders.
-Public Sub WriteFileUTF8(ByVal filePath As String, ByVal content As String)
+' If append = False (default): completely overwrites the file, creating missing folders.
+' If append = True: appends the text to the end of the file
+' (the file is created with the given content if it does not exist).
+Public Sub WriteFileUTF8(ByVal filePath As String, ByVal content As String, Optional ByVal append As Boolean = False)
     Dim fso As Object
     Dim stream As Object
     Dim folderPath As String
@@ -61,6 +63,13 @@ Public Sub WriteFileUTF8(ByVal filePath As String, ByVal content As String)
     folderPath = fso.GetParentFolderName(filePath)
     If folderPath <> "" Then
         EnsureFolderExists folderPath
+    End If
+    
+    ' Append mode: first read the existing content and then
+    ' rewrite the file as old content + new content. This keeps
+    ' the UTF-8 encoding correct for the whole resulting file.
+    If append And fso.FileExists(filePath) Then
+        content = ReadFileUTF8(filePath) & content
     End If
     
     Set stream = CreateObject("ADODB.Stream")
@@ -151,4 +160,6 @@ Private Sub EnsureFolderExists(ByVal folderPath As String)
     
     Set fso = Nothing
 End Sub
+
+
 

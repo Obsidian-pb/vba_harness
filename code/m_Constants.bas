@@ -1,6 +1,6 @@
 Attribute VB_Name = "m_Constants"
 ' Module: m_Constants - Global constants (debug mode, registry keys, harness/toolbar names)
-Public Const DEBUG_MODE = True
+Public Const DEBUG_MODE = False
 Public Const HARNESS_NAME = "HARNESS"
 
 
