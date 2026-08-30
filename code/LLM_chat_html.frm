@@ -222,6 +222,10 @@ Dim prompt As String
     
     ' 1. Get the prompt
     prompt = Me.TB_Message.text
+    If prompt = "" Then
+        AppendMessage "system", "Empty prompt can not be send to LLM!", "assistant"
+        Exit Sub
+    End If
     Me.TB_Message.text = ""
     AppendMessage "You", prompt, "user"
     
