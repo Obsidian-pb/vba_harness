@@ -248,7 +248,7 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
     project_name = ExtractJsonString(argsJson, "project_name")
     module_name = ExtractJsonString(argsJson, "module_name")
     new_code = ExtractJsonString(argsJson, "new_code")
-
+    
     ' Numeric parameters - parse
     Dim startStr As String
     Dim endStr As String
