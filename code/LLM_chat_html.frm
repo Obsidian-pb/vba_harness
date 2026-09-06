@@ -2,9 +2,9 @@ VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} LLM_chat_html 
    Caption         =   "UserForm1"
    ClientHeight    =   9615
-   ClientLeft      =   45
-   ClientTop       =   390
-   ClientWidth     =   11055
+   ClientLeft      =   48
+   ClientTop       =   396
+   ClientWidth     =   11052
    OleObjectBlob   =   "LLM_chat_html.frx":0000
    ShowModal       =   0   'False
    StartUpPosition =   1  'CenterOwner
@@ -146,7 +146,7 @@ Private Sub CB_AddFile_Click()
         .lStructSize = Len(ofn)
         .hwndOwner = 0
         .hInstance = 0
-        .lpstrFilter = "Text files and Markdown (*.txt;*.md;*.qmd)" & Chr$(0) & "*.txt;*.md;*.qmd" & Chr$(0) & Chr$(0)
+        .lpstrFilter = "Text files and Markdown (*.txt;*.md;*.qmd)" & Chr$(0) & "*.txt;*.md;*.qmd;*.yaml" & Chr$(0) & Chr$(0)
         .nFilterIndex = 1
         .lpstrFile = sFile
         .nMaxFile = 259
