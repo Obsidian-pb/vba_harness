@@ -701,7 +701,8 @@ Private Function json_Encode(ByVal json_Text As Variant) As String
         Select Case json_AscCode
         Case 34
             ' " -> 34 -> \"
-            json_Char = "\"""
+'            json_Char = "\"""
+            json_Char = "\" & Chr(34)
         Case 92
             ' \ -> 92 -> \\
             json_Char = "\\"
