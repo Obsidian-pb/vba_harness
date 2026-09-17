@@ -567,15 +567,57 @@ End Function
 
 ' Extracts the complete assistant message JSON from the response
 ' (to save it to history along with tool_calls).
+' MD-04: primary extraction uses structural JSON parsing (JsonConverter)
+' and re-serializes choices[0].message back into a compact JSON string.
+' This removes the fragile manual brace-counting, which could be confused
+' by braces/quotes appearing inside string values (content, arguments).
+' The old string scan is preserved only as an emergency fallback.
 Private Function ExtractAssistantMessageJson(ByVal json As String) As String
+    On Error GoTo Fallback
+
+    Dim root As Object
+    Dim choices As Collection
+    Dim choice As Object
+    Dim message As Object
+
+    Set root = JsonConverter.ParseJson(json)
+    If root Is Nothing Then GoTo Fallback
+
+    If root.Exists("choices") Then
+        Set choices = root("choices")
+        If choices.Count > 0 Then
+            Set choice = choices(1)
+            If choice.Exists("message") Then
+                Set message = choice("message")
+
+                ' Re-serialize the message dictionary back to JSON.
+                ' Whitespace = "" produces compact single-line output,
+                ' consistent with Build*MessageJson entries in history.
+                ExtractAssistantMessageJson = JsonConverter.ConvertToJson(message, "")
+                Exit Function
+            End If
+        End If
+    End If
+
+    ' Message not found structurally — try the manual fallback.
+    GoTo Fallback
+
+Fallback:
+    ExtractAssistantMessageJson = ExtractAssistantMessageJson_Manual(json)
+End Function
+
+
+' Manual InStr fallback used only when structural JSON parsing fails
+' (previous logic preserved as an emergency path).
+Private Function ExtractAssistantMessageJson_Manual(ByVal json As String) As String
     Dim key As String, pos As Long
     key = """message"":"
     pos = InStr(1, json, key, vbTextCompare)
-    If pos = 0 Then ExtractAssistantMessageJson = "{}": Exit Function
+    If pos = 0 Then ExtractAssistantMessageJson_Manual = "{}": Exit Function
 
     Dim startObj As Long
     startObj = InStr(pos + Len(key), json, "{")
-    If startObj = 0 Then ExtractAssistantMessageJson = "{}": Exit Function
+    If startObj = 0 Then ExtractAssistantMessageJson_Manual = "{}": Exit Function
 
     ' Find the matching closing brace, accounting for nesting.
     Dim depth As Long, i As Long
@@ -585,11 +627,11 @@ Private Function ExtractAssistantMessageJson(ByVal json As String) As String
             Case "{": depth = depth + 1
             Case "}": depth = depth - 1
                 If depth = 0 Then
-                    ExtractAssistantMessageJson = Mid$(json, startObj, i - startObj + 1)
+                    ExtractAssistantMessageJson_Manual = Mid$(json, startObj, i - startObj + 1)
                     Exit Function
                 End If
         End Select
     Next i
-    ExtractAssistantMessageJson = "{}"
+    ExtractAssistantMessageJson_Manual = "{}"
 End Function
 
