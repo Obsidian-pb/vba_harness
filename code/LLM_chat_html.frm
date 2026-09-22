@@ -253,6 +253,18 @@ End Sub
 
 
 Private Sub UserForm_Activate()
+    ' Profiles:
+    Dim names As Collection
+    Dim i As Long
+
+    Set names = GetProfileNames()
+    Me.cbox_profile.Clear
+    For i = 1 To names.Count
+        Me.cbox_profile.AddItem names(i)
+    Next i
+    Me.cbox_profile.text = names(1)
+    
+    ' Agent config
     AgentConfig
 End Sub
 

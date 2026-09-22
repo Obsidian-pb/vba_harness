@@ -18,7 +18,7 @@ Public Function GetModuleCode(Optional ByVal moduleName As String = "", _
     Set cm = GetCodeModule(moduleName, projectName)
     If cm Is Nothing Then Exit Function
     If cm.CountOfLines > 0 Then
-        GetModuleCode = cm.Lines(1, cm.CountOfLines)
+        GetModuleCode = cm.lines(1, cm.CountOfLines)
     End If
 End Function
 
@@ -75,11 +75,11 @@ Public Function GetSelectedCode() As String
     If startLine = endLine And startCol = endCol Then
         ' Cursor without selection — return the entire module
         If cm.CountOfLines > 0 Then
-            GetSelectedCode = cm.Lines(1, cm.CountOfLines)
+            GetSelectedCode = cm.lines(1, cm.CountOfLines)
         End If
     Else
         ' Selected range
-        GetSelectedCode = cm.Lines(startLine, endLine - startLine + 1)
+        GetSelectedCode = cm.lines(startLine, endLine - startLine + 1)
     End If
 End Function
 

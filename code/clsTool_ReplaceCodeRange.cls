@@ -398,7 +398,7 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
 
     ' Get full module code (for Undo)
     Dim fullCode As String
-    fullCode = cm.Lines(1, totalLines)
+    fullCode = cm.lines(1, totalLines)
 
     ' ============================================================
     '  SAVE STATE FOR UNDO (single slot - replaces previous state)

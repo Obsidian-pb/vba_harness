@@ -62,14 +62,14 @@ Private Function clsToolBase_Execute(ByVal argsJson As String) As String
     ' If nothing is selected (just cursor) - get the entire code of the active module
     If startLine = endLine And startCol = endCol Then
         If cm.CountOfLines > 0 Then
-            resultCode = cm.Lines(1, cm.CountOfLines)
+            resultCode = cm.lines(1, cm.CountOfLines)
         Else
             resultCode = ""
         End If
     Else
         ' If a range is selected - extract it
         lineCount = endLine - startLine + 1
-        resultCode = cm.Lines(startLine, lineCount)
+        resultCode = cm.lines(startLine, lineCount)
     End If
     
     ' Build the response

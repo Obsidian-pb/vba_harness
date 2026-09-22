@@ -1,7 +1,7 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} LLM_config 
    Caption         =   "LLM Settings"
-   ClientHeight    =   8130
+   ClientHeight    =   9405
    ClientLeft      =   45
    ClientTop       =   390
    ClientWidth     =   5355
@@ -35,11 +35,35 @@ Private Sub CommandButton1_Click()
 End Sub
 
 Private Sub UserForm_Activate()
-    On Error Resume Next
-    tb_base_url.text = CStr(GetSettingFromRegistry(REG_LLM_API_URL, DEF_LLM_API_URL))
-    tb_model_main.text = CStr(GetSettingFromRegistry(REG_LLM_MODEL_ID, DEF_LLM_MODEL_ID))
-    tb_model_fast.text = CStr(GetSettingFromRegistry(REG_LLM_MODEL_FAST_ID, DEF_LLM_MODEL_FAST_ID))
-    tb_api_key.text = CStr(GetSettingFromRegistry(REG_LLM_API_KEY, ""))
-    tb_system_prompt.text = CStr(GetSettingFromRegistry(REG_LLM_SYSTEM_PROMPT, ""))
-    On Error GoTo 0
+'    On Error Resume Next
+'    tb_base_url.text = CStr(GetSettingFromRegistry(REG_LLM_API_URL, DEF_LLM_API_URL))
+'    tb_model_main.text = CStr(GetSettingFromRegistry(REG_LLM_MODEL_ID, DEF_LLM_MODEL_ID))
+'    tb_model_fast.text = CStr(GetSettingFromRegistry(REG_LLM_MODEL_FAST_ID, DEF_LLM_MODEL_FAST_ID))
+'    tb_api_key.text = CStr(GetSettingFromRegistry(REG_LLM_API_KEY, ""))
+'    tb_system_prompt.text = CStr(GetSettingFromRegistry(REG_LLM_SYSTEM_PROMPT, ""))
+'    On Error GoTo 0
+    
+    ' Profiles:
+    Dim names As Collection
+    Dim i As Long
+
+    Set names = GetProfileNames()
+    Me.cbox_profile.Clear
+    For i = 1 To names.Count
+        Me.cbox_profile.AddItem names(i)
+    Next i
 End Sub
+
+Private Sub cbox_profile_Change()
+    Dim u As String, k As String, m As String, s As String
+
+    If GetLLMProfileParams(Me.cbox_profile.value, u, k, m, s) Then
+        Me.tb_profile_name.text = Me.cbox_profile.value
+        Me.tb_base_url.text = u
+        Me.tb_api_key.text = k
+        Me.tb_model_main.text = m
+        Me.tb_system_prompt.text = s
+    End If
+End Sub
+
+
