@@ -24,6 +24,8 @@ Private tick_interval As Long       ' Work indicator event interval
 Public llm_api_url As String
 Public llm_model_id As String
 Public llm_api_key As String
+Public llm_max_tokens As String
+Public llm_temperature As String
 Public llm_system_prompt As String
 
 
@@ -75,6 +77,8 @@ End Function
 Public Function Set_LLM(ByVal api_url As String, _
                 ByVal model_id As String, _
                 ByVal api_key As String, _
+                ByVal max_tokens As String, _
+                ByVal temperature As String, _
                 ByVal system_prompt As String, _
                 Optional ByVal max_turns As Integer = 30, _
                 Optional ByVal tick_intrvl As Integer = 10000) As clsHarness
@@ -82,6 +86,8 @@ Public Function Set_LLM(ByVal api_url As String, _
     
     llm_model_id = model_id
     llm_api_key = api_key
+    llm_max_tokens = max_tokens
+    llm_temperature = temperature
     If llm_system_prompt = "" Then
         llm_system_prompt = system_prompt
     End If
@@ -206,15 +212,28 @@ Dim startTime As Variant
 
     ' Build the request body: model + messages + tool descriptions.
     ' "stream":false is explicitly set to get a complete JSON.
+    ' "temperature" and "max_tokens" are added to the payload only
+    ' when they are specified (non-empty); otherwise the fields are omitted.
     Dim payload As String
     payload = "{" & _
         """model"":""" & llm_model_id & """," & _
         """stream"":false," & _
-        """messages"":" & messagesJson & "," & _
+        """messages"":" & messagesJson & ","
+
+    If Trim(llm_temperature) <> "" Then
+        payload = payload & """temperature"":" & llm_temperature & ","
+    End If
+
+    If Trim(llm_max_tokens) <> "" Then
+        payload = payload & """max_tokens"":" & llm_max_tokens & ","
+    End If
+
+    payload = payload & _
         """tools"":" & tools_handler.GetToolsJson() & _
     "}"
 
     http.send payload
+    WriteFileUTF8 "G:\temp\r.json", payload
 
     Dim i As Long: i = 0
     startTime = Now

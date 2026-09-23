@@ -43,6 +43,8 @@ Public Sub SaveLLMProfile(ByVal profileName As String, _
                           ByVal apiUrl As String, _
                           ByVal apiKey As String, _
                           ByVal modelId As String, _
+                          ByVal maxTokens As String, _
+                          ByVal temperature As String, _
                           ByVal systemPrompt As String)
     Dim filePath As String
     Dim profiles As Collection
@@ -78,6 +80,8 @@ Public Sub SaveLLMProfile(ByVal profileName As String, _
     prof("url") = apiUrl
     prof("api_key") = apiKey
     prof("model") = modelId
+    prof("max_tokens") = maxTokens
+    prof("temperature") = temperature
     prof("system_prompt") = systemPrompt
 
     WriteFileUTF8 filePath, SerializeProfilesYaml(profiles)
@@ -107,12 +111,16 @@ Public Function GetLLMProfileParams(ByVal profileName As String, _
                                     ByRef apiUrl As String, _
                                     ByRef apiKey As String, _
                                     ByRef modelId As String, _
+                                    ByRef maxTokens As String, _
+                                    ByRef temperature As String, _
                                     ByRef systemPrompt As String) As Boolean
     Dim prof As Object
 
     apiUrl = ""
     apiKey = ""
     modelId = ""
+    maxTokens = ""
+    temperature = ""
     systemPrompt = ""
 
     Set prof = GetLLMProfile(profileName)
@@ -121,6 +129,8 @@ Public Function GetLLMProfileParams(ByVal profileName As String, _
     apiUrl = ProfileValue(prof, "url")
     apiKey = ProfileValue(prof, "api_key")
     modelId = ProfileValue(prof, "model")
+    maxTokens = ProfileValue(prof, "max_tokens")
+    temperature = ProfileValue(prof, "temperature")
     systemPrompt = ProfileValue(prof, "system_prompt")
 
     GetLLMProfileParams = True
@@ -216,7 +226,7 @@ Private Function ParseProfilesYaml(ByVal content As String) As Collection
         ' Store only known keys and only when a profile is already open.
         If Not current Is Nothing Then
             Select Case key
-                Case "name", "url", "api_key", "model", "system_prompt"
+                Case "name", "url", "api_key", "model", "max_tokens", "temperature", "system_prompt"
                     current(key) = val
             End Select
         End If
@@ -268,6 +278,8 @@ Private Function SerializeProfilesYaml(ByVal profiles As Collection) As String
         sb = sb & "    url: " & QuoteYamlValue(ProfileValue(prof, "url")) & vbCrLf
         sb = sb & "    api_key: " & QuoteYamlValue(ProfileValue(prof, "api_key")) & vbCrLf
         sb = sb & "    model: " & QuoteYamlValue(ProfileValue(prof, "model")) & vbCrLf
+        sb = sb & "    max_tokens: " & QuoteYamlValue(ProfileValue(prof, "max_tokens")) & vbCrLf
+        sb = sb & "    temperature: " & QuoteYamlValue(ProfileValue(prof, "temperature")) & vbCrLf
         sb = sb & "    system_prompt: " & QuoteYamlValue(ProfileValue(prof, "system_prompt")) & vbCrLf
     Next prof
 

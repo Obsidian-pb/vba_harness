@@ -3,8 +3,9 @@ Attribute VB_Name = "m_tests"
 
 Public Sub TestSaveProfile()
 ' Save (or update) a profile
-SaveLLMProfile "smart", "https://api.selectel.ru/aig/v1/chat/completions", _
-               "sk-sl-v1-***", "deepseek/deepseek-v4-pro-0813", "Пиши все комментарии к коду VBA на английском"
+SaveLLMProfile "default", "https://api.selectel.ru/aig/v1/chat/completions", _
+               "sk-sl-v1-***", "deepseek/deepseek-v4-flash-0731", _
+               "80000", "0.8", "Пиши все комментарии к коду VBA на английском"
 End Sub
 
 
@@ -18,8 +19,15 @@ End Sub
 
 Public Sub TEstGetProfileFields()
 ' Get a profile field by field
-    Dim u As String, k As String, m As String, s As String
-    If GetLLMProfileParams("default", u, k, m, s) Then Debug.Print m
+    Dim u As String, k As String, m As String, mt As String, t As String, s As String
+    If GetLLMProfileParams("smart", u, k, m, mt, t, s) Then
+        Debug.Print u
+        Debug.Print k
+        Debug.Print m
+        Debug.Print mt
+        Debug.Print t
+        Debug.Print s
+    End If
 End Sub
 
 
