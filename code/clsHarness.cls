@@ -233,7 +233,7 @@ Dim startTime As Variant
     "}"
 
     http.send payload
-    WriteFileUTF8 "G:\temp\r.json", payload
+'    WriteFileUTF8 "G:\temp\r.json", payload
 
     Dim i As Long: i = 0
     startTime = Now
